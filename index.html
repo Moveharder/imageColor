@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=0,viewport-fit=cover"
+    />
+    <title>寻找主色调</title>
+    <style>
+      *,
+      html {
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+      body {
+        padding-top: 100px;
+        overflow: scroll;
+        text-align: center;
+        display: flex;
+        flex-direction: column-reverse;
+        justify-content: center;
+        align-items: center;
+      }
+      #graphy_canvas {
+        border: solid 2px purple;
+        background-color: #000;
+      }
+      img {
+        width: 400px;
+      }
+      #avg_color {
+        padding: 20px;
+        border-radius: 8px;
+        line-height: 30px;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h3 id="avg_color"></h3>
+    <select id="imgs"></select>
+    <br />
+    <canvas id="graphy_canvas"></canvas>
+    <br />
+    <br />
+  </body>
+  <script type="module">
+    import ImageColor from "./index.js";
+    let IC = new ImageColor({ dpr: 1 });
+    let imgs = [
+      "./img2.png",
+      "./img1.png",
+      "./img3.png",
+      "./img4.png",
+      "./img5.jpg",
+      "./img6.jpeg",
+      "./img7.png",
+      "https://thirdwx.qlogo.cn/mmopen/vi_32/17uQMj28kzyibbO7yich0hkX4CmzDqzrFQP8cbzj33cPNWsJ1BNyodtC8U8HDC3Edibzjj2Sz02eKp8sLM1C2OAxg/132",
+    ];
+
+    generateSpiritImageFrameMap();
+
+    analyst(imgs[0]);
+
+    function generateSpiritImageFrameMap() {
+      let selector = document.querySelector("#imgs");
+      let frag = document.createDocumentFragment();
+      imgs.map((item, index) => {
+        let option = document.createElement("option");
+        option.value = item;
+        option.innerText = `图片#${index + 1}`;
+        frag.appendChild(option);
+      });
+      selector.appendChild(frag);
+
+      selector.addEventListener("change", (e) => {
+        let value = e.target.value;
+        analyst(value);
+      });
+    }
+
+    function analyst(val) {
+      IC.analizeImage({
+        id: "mycanvas",
+        url: val,
+        frequency: 20,
+      }).then((res) => {
+        let primary = IC.getPrimary();
+        let palette = IC.getPalette();
+
+        console.log(primary);
+        console.log(palette);
+
+        renderColors(primary, palette);
+
+        // 执行该任务的话-如果响应速度会比较慢的话，可以延迟渲染，保证当前页面渲染流畅
+        setTimeout(() => {
+          IC.showGC({ gcid: "graphy_canvas" });
+        }, 0);
+      });
+    }
+
+    function renderColors(primary = [], colors = []) {
+      let html = `<div style="text-align:left;color:rgb(${primary})">主题色：rgb(${primary})</div> <hr/>`;
+      let maxYuvColor = IC.getMaxColor();
+      for (let key in colors) {
+        let { name, color, yuvPercent } = colors[key];
+        html += `<div style="text-align:left;color:rgb(${color})"> ${name}: rgb(${
+          color || "not found"
+        }) ${yuvPercent}% </div>`;
+      }
+
+      let resDom = document.querySelector("#avg_color");
+      resDom.innerHTML = html;
+      resDom.style.backgroundColor = `rgb(${colors.soft.contrastColor})`;
+      resDom.style.boxShadow = `rgb(${maxYuvColor.color}) 12px 15px 20px inset,rgb(${maxYuvColor.color}) -1px -1px 150px inset`;
+      document.body.style.backgroundColor = `rgb(${maxYuvColor.color})`;
+    }
+  </script>
+</html>
