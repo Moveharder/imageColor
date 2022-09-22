@@ -10,9 +10,12 @@ IC.analizeImage({
     id: "mycanvas",
     url: './img.png',
     frequency: 20, 
-}).then(({ primary, colors }) => {
-    console.log('主题色：', primary);
-    console.log('三种不同亮度的颜色：', colors);
+}).then((res) => {
+    const { primary, colors, pixels, imageInfo } = res;
+    console.log("主题色：", primary);
+    console.log("三种不同亮度的颜色：", colors);
+    console.log("所有像素", pixels);
+    console.log("图片信息：", imageInfo);
 
     // 执行该任务的话-如果响应速度比较慢的话，可以延迟渲染，保证当前页面渲染流畅
     setTimeout(() => {
@@ -49,6 +52,8 @@ IC.analizeImage({
 {
     primary: [r,g,b],
     colors: { bright:{...}, soft:{...}, dark:{...} },
+    pixels: [[r,g,b],...], 
+    imageInfo: {}
 }
 
 其中{...} = {
@@ -62,7 +67,7 @@ IC.analizeImage({
 
 > `IC.showGC({ gcid: "graphy_canvas" })` 方法用于把图片处理过程中的颜色分布渲染到一个指定的 canvas 上，方便观察！
 
-![色谱实例](./%E8%89%B2%E8%B0%B1demo.png)
+![色谱实例](./色谱demo.png)
 
 ### 简单粗暴实现思路！
 
