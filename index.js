@@ -1,12 +1,11 @@
 export default class ImageColor {
-  constructor({ dpr = 1, success, fail }) {
+  constructor() {
     this.canvas = null;
     this.ctx = null;
     this.img = null;
     this.imageInfo = {};
-    this.dpr = dpr || window.devicePixelRatio;
-    this.success = typeof success == "function" ? success : (res) => {};
-    this.fail = typeof fail == "function" ? fail : (err) => {};
+    this.dpr = 1; //dpr || window.devicePixelRatio;
+    this.gcCanvas = null; //色谱canvas
 
     this.pixels = [];
     this.primaryColor = []; //主题色
@@ -57,6 +56,7 @@ export default class ImageColor {
       this.ctx = this.canvas.getContext("2d");
       try {
         imgInfo = await this.loadImage(url);
+        this.imageInfo = imgInfo;
       } catch (err) {
         return reject({
           msg: "图片加载失败",
@@ -64,14 +64,13 @@ export default class ImageColor {
         });
       }
       this.img = imgInfo.img;
-      console.log("imgInfo:", imgInfo);
 
       this.canvas.width = `${imgInfo.width}`;
       this.canvas.height = `${imgInfo.height}`;
       this.canvas.style.width = `${imgInfo.width}px`;
       this.canvas.style.height = `${imgInfo.height}px`;
 
-      document.body.appendChild(this.canvas);
+      // document.body.appendChild(this.canvas);
 
       let w = imgInfo.width;
       let h = imgInfo.height;
@@ -81,7 +80,12 @@ export default class ImageColor {
       this.createPixels(frequency);
       this.analizePixels();
 
-      resolve();
+      resolve({
+        primary: this.primaryColor,
+        colors: this.colorInfo,
+        pixels: this.pixels,
+        imageInfo: this.imageInfo,
+      });
     });
   }
 
@@ -114,7 +118,7 @@ export default class ImageColor {
         }
       }
     }
-    console.log("pixelArray:", pixelArray);
+    // console.log("pixelArray:", pixelArray);
     this.pixels = pixelArray;
     return pixelArray;
   }
@@ -136,6 +140,7 @@ export default class ImageColor {
       canvas.height = size * dpr2 + beyoundHeight;
       canvas.style.width = `${size}px`;
       canvas.style.height = `${size + beyoundHeight / dpr2}px`;
+      this.gcCanvas = canvas;
 
       // 生成色谱点集
       this.pixels.map((item) => {
@@ -239,7 +244,7 @@ export default class ImageColor {
 
     // 计算颜色的yuv（亮度）
     this.colorInfo.bright.yuvOfColor = this.getYUV(avgBrightColor);
-    this.colorInfo.soft.yuvOfColor = this.getYUV(avgBrightColor);
+    this.colorInfo.soft.yuvOfColor = this.getYUV(avgSoftColor);
     this.colorInfo.dark.yuvOfColor = this.getYUV(avgDarkColor);
 
     let colors = [
@@ -250,8 +255,6 @@ export default class ImageColor {
     ];
     colors = colors.filter((item) => item);
     this.colors = colors;
-
-    this.canvas.style.boxShadow = `rgb(${avgDiffPrimaryColor}) 12px 15px 20px inset,rgb(${avgDiffPrimaryColor}) -1px -1px 150px inset`;
   }
 
   getDiffAvgPrimaryColor(pixels, avgPrimaryColor, offset = 40) {
@@ -292,16 +295,8 @@ export default class ImageColor {
     });
 
     let res = [Math.round(R / len), Math.round(G / len), Math.round(B / len)];
-    console.log(type, ": ", res);
+    // console.log(type, ": ", res);
     return res;
-  }
-
-  getPrimary() {
-    return this.primaryColor;
-  }
-
-  getPalette() {
-    return this.colorInfo;
   }
 
   getMaxColor() {
@@ -379,10 +374,10 @@ export default class ImageColor {
     });
   }
 
-  saveImage(filename) {
+  saveGCImage(filename) {
     return new Promise((resolve, reject) => {
       try {
-        this.canvas.toBlob((blob) => {
+        this.gcCanvas.toBlob((blob) => {
           if (window.navigator.msSaveOrOpenBlob) {
             navigator.msSaveBlob(blob, filename);
           } else {
