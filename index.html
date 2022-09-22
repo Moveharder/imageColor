@@ -31,16 +31,20 @@
       img {
         width: 400px;
       }
-      #avg_color {
-        padding: 20px;
+      #color_des {
+        padding: 40px;
         border-radius: 8px;
         line-height: 30px;
         margin-top: 10px;
+        position: fixed;
+        bottom: 0;
+        right: 0;
       }
     </style>
   </head>
   <body>
-    <h3 id="avg_color"></h3>
+    <img id="sourceimg" src="" alt="" />
+    <h3 id="color_des"></h3>
     <select id="imgs"></select>
     <br />
     <canvas id="graphy_canvas"></canvas>
@@ -49,23 +53,26 @@
   </body>
   <script type="module">
     import ImageColor from "./index.js";
-    let IC = new ImageColor({ dpr: 1 });
+    let IC = new ImageColor();
     let imgs = [
+      "./img4.png",
       "./img2.png",
       "./img1.png",
       "./img3.png",
-      "./img4.png",
       "./img5.jpg",
       "./img6.jpeg",
       "./img7.png",
+      "./img8.jpeg",
       "https://thirdwx.qlogo.cn/mmopen/vi_32/17uQMj28kzyibbO7yich0hkX4CmzDqzrFQP8cbzj33cPNWsJ1BNyodtC8U8HDC3Edibzjj2Sz02eKp8sLM1C2OAxg/132",
     ];
+    let sourceimgDom = document.querySelector("#sourceimg");
 
-    generateSpiritImageFrameMap();
+    imgSelectRender();
 
     analyst(imgs[0]);
+    sourceimgDom.src = imgs[0];
 
-    function generateSpiritImageFrameMap() {
+    function imgSelectRender() {
       let selector = document.querySelector("#imgs");
       let frag = document.createDocumentFragment();
       imgs.map((item, index) => {
@@ -78,6 +85,7 @@
 
       selector.addEventListener("change", (e) => {
         let value = e.target.value;
+        sourceimgDom.src = value;
         analyst(value);
       });
     }
@@ -87,20 +95,26 @@
         id: "mycanvas",
         url: val,
         frequency: 20,
-      }).then((res) => {
-        let primary = IC.getPrimary();
-        let palette = IC.getPalette();
+      })
+        .then((res) => {
+          const { primary, colors, pixels, imageInfo } = res;
+          console.log("主题色：", primary);
+          console.log("三种不同亮度的颜色：", colors);
+          console.log("所有像素", pixels);
+          console.log("图片信息：", imageInfo);
 
-        console.log(primary);
-        console.log(palette);
+          renderColors(primary, colors);
 
-        renderColors(primary, palette);
-
-        // 执行该任务的话-如果响应速度会比较慢的话，可以延迟渲染，保证当前页面渲染流畅
-        setTimeout(() => {
-          IC.showGC({ gcid: "graphy_canvas" });
-        }, 0);
-      });
+          // 执行该任务的话-如果响应速度会比较慢的话，可以延迟渲染，保证当前页面渲染流畅
+          setTimeout(() => {
+            IC.showGC({ gcid: "graphy_canvas" });
+            
+            // IC.saveGCImage('色谱.png'); //需要先调用 showGC
+          }, 0);
+        })
+        .catch((err) => {
+          console.error("failed: ", err);
+        });
     }
 
     function renderColors(primary = [], colors = []) {
@@ -113,11 +127,14 @@
         }) ${yuvPercent}% </div>`;
       }
 
-      let resDom = document.querySelector("#avg_color");
+      let resDom = document.querySelector("#color_des");
+      let boxShadow = `rgb(${maxYuvColor.color}) 0 0 20px inset,rgb(${maxYuvColor.color}) -1px -1px 150px inset`;
       resDom.innerHTML = html;
       resDom.style.backgroundColor = `rgb(${colors.soft.contrastColor})`;
-      resDom.style.boxShadow = `rgb(${maxYuvColor.color}) 12px 15px 20px inset,rgb(${maxYuvColor.color}) -1px -1px 150px inset`;
+      resDom.style.boxShadow = boxShadow;
       document.body.style.backgroundColor = `rgb(${maxYuvColor.color})`;
+
+      sourceimgDom.style.boxShadow = boxShadow;
     }
   </script>
 </html>
