@@ -9,13 +9,10 @@ let IC = new ImageColor();
 IC.analizeImage({
     id: "mycanvas",
     url: './img.png',
-    frequency: 20,
-}).then((res) => {
-    let primary = IC.getPrimary();
-    let palette = IC.getPalette();
-
+    frequency: 20, 
+}).then(({ primary, colors }) => {
     console.log('主题色：', primary);
-    console.log('三种不同亮度的颜色：', palette);
+    console.log('三种不同亮度的颜色：', colors);
 
     // 执行该任务的话-如果响应速度比较慢的话，可以延迟渲染，保证当前页面渲染流畅
     setTimeout(() => {
@@ -69,7 +66,7 @@ IC.analizeImage({
 
 ### 简单粗暴实现思路！
 
-没有用到 8 叉树法，目前自己这种简单粗暴的操作能达到预期效果！
+没有用到8叉树法或者其他主流算法，目前自己这种简单粗暴的操作已经能够达到预期效果！
 
 - 1.按照指定采样间隔，获取到整张图片的像素点的颜色数据，记作 pixels；
 - 2.第一次遍历 pixels，做以下操作：
